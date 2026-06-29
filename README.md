@@ -156,7 +156,7 @@ uv run main.py --agent=guidedllm --game=ls20
 
 Source: [`llm_agents.py` line 496](./ARC-AGI-3-Agents/agents/templates/llm_agents.py#L496).
 
-Visit the scorecard URL that's printed at the end of the run, use the 'play' icon under the 'replays' column and see a video of each frame of the action. What did it get wrong? 
+Visit the scorecard URL that's printed at the end of the run, use the 'play' icon under the 'replays' column and see a video of each frame of the action. What did it get wrong? This scorecard _does_ show a reasoning log (phew). Note that you can `CTRL c` to break out early as with `o3` (the default on this model) it is very slow. You should definitely read the code to check the prompt - it is not a great prompt.
 
 > [!NOTE]
 > Whilst the prompt may not _fit_ `ls20` I reckon it is easy to fix it up - maybe this is a *first good challenge*?
