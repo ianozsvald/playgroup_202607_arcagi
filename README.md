@@ -15,6 +15,7 @@ The more you do, the more you'll get from the day. The first two bullets are a g
     - [paper summary on Emergent Mind](https://www.emergentmind.com/papers/2603.24621)
 - See the Kaggle competition leaderboard note below. There are 3 benchmark solutions; finding these and reading about them is a good clue for how to get going.
 - [30-day write-up from the pre-v3 competition](https://arcprize.org/blog/arc-agi-3-preview-30-day-learnings) has useful background (includes links to public solutions)
+- [GPT 5.5 & Opus 4.7 analysis](https://arcprize.org/blog/arc-agi-3-gpt-5-5-opus-4-7-analysis) via https://arcprize.org/blog
 - ["Core knowledge" by Elizabeth S. Spelke and Katherine D. Kinzler](https://www.harvardlds.org/wp-content/uploads/2017/01/SpelkeKinzler07-1.pdf). This is the assumed mammal-like core knowledge that Chollet believes our agents should just understand, and the games depend on it.
 
 ## Non-Agent Mode (smoke test)
@@ -51,14 +52,26 @@ See the [API keys reference](https://docs.arcprize.org/api-keys).
 
 Traces of example runs appear (delayed) on your [scorecards page](https://arcprize.org/scorecards) (login required).
 
+Without an API key your log (pasted to the screen) will look like:
+
+```
+ARC-AGI$ uv run quickstart.py
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+2026-06-29 12:43:54 | INFO | *Got anonymous API key:* b33391fb-5da8-442d-93ed-97c6edd26758
+2026-06-29 12:43:54 | INFO | *You can register for an API key at https://three.arcprize.org*
+...
+```
+
 When you have the API key correctly setup, you should get something similar to (rather than the _anonymous_ API key log):
 
 ```
-*INFO:arc_agi.scorecard:Initialized ScorecardManager* with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
+INFO:arc_agi.scorecard:Initialized ScorecardManager with idle_for=0:15:00 and max_open_for=3 days, 0:00:00
 2026-06-29 12:02:54 | INFO | Successfully fetched 25 environment(s) from API
 2026-06-29 12:02:54 | INFO | *Created new scorecard* : 1c4f2b33-dc9f-432f-a12b-5bab94747c55
 ```
 
+
+Note that whilst your API key is setup, this run isn't logged (Ian note - I don't know why, I guess there's a switch to flip somewhere in their default code?). This doesn't stop you, you'll see the online scorecard in the Agents section next.
 
 Following the [Play your first game](https://docs.arcprize.org/#3-play-your-first-game) docs, you can create `my-play.py` (non-LLM) in the same folder and run it:
 
@@ -86,6 +99,10 @@ git clone git@github.com:arcprize/ARC-AGI-3-Agents.git && cd ARC-AGI-3-Agents &&
 
 # Prep the environment file
 cp .env.example .env
+
+# Builds the arc-agi Agents package
+uv sync
+
 ```
 
 ### 2. Get an ARC AGI key (same as above)
@@ -104,7 +121,7 @@ Traces of example runs appear (delayed) on your [scorecards page](https://arcpri
 
 Edit `.env` to set `ARC_API_KEY` and `OPENAI_API_KEY`. I commented out `AGENTOPS_API_KEY`.
 
-Change `HOST` so it reads `HOST=arcprize.org` (i.e. drop the `three.`), else you'll get an error trying to follow the scorecard URL. See https://github.com/arcprize/ARC-AGI-3-Agents/issues/78.
+*maybe not needed now in 2026-06* Change `HOST` so it reads `HOST=arcprize.org` (i.e. drop the `three.`), else you'll get an error trying to follow the scorecard URL. See https://github.com/arcprize/ARC-AGI-3-Agents/issues/78.
 
 ### 5. Test Non-LLM Agent
 
@@ -115,7 +132,9 @@ uv run main.py --agent=random --game=ls20
 ```
 
 > [!NOTE]
-> If you didn't edit `HOST` in the step above, your scorecard url at the end of the log will be wrong - strip `three.` from the start to see your scorecard and log. See [All scorecards](https://arcprize.org/scorecards).
+> If you didn't edit `HOST` in the step above, your scorecard url at the end of the log will be wrong - strip `three.` from the start to see your scorecard and log. See [All scorecards](https://arcprize.org/scorecards). You're hoping to see something like `2026-06-29 13:02:06,487 | INFO | View your scorecard online: https://arcprize.org/scorecards/766138e0-a880-4e4c-9fca-3b1eafe06b8c` (note the lack of `three.` in the URL).
+
+If you visit https://arcprize.org/platform/scorecards you'll see your runs, the most recent will be the most you just run (hopefully the `random` one above!), click through to that scorecard, then on the right side about halfway down the screen you'll see 'Replay', click the Play icon, you should see the moves animated plus a reasoning log on the right (there's no reasoning, it is just a log of moves).
 
 ### 6. Test LLM Agent
 
@@ -125,7 +144,7 @@ Next, visit the [agents quickstart](https://docs.arcprize.org/agents-quickstart)
 uv run main.py --agent=llm --game=ls20
 ```
 
-Source: [`llm_agents.py` line 16](./ARC-AGI-3-Agents/agents/templates/llm_agents.py#L16). This took about 2 minutes and $0.09 with `gpt-4o-mini` on my run. Check your [OpenAI balance](https://platform.openai.com/home).
+Source: [`llm_agents.py` line 16](./ARC-AGI-3-Agents/agents/templates/llm_agents.py#L16). This took about 2 minutes and $0.09 with `gpt-4o-mini` on my run. Check your [OpenAI balance](https://platform.openai.com/home). Note if you look at the Replay on the scorecard you'll see the moves, but there's no reasoning log - I don't know why!
 
 ### 7. Test Guided LLM Agent
 
@@ -137,7 +156,7 @@ uv run main.py --agent=guidedllm --game=ls20
 
 Source: [`llm_agents.py` line 496](./ARC-AGI-3-Agents/agents/templates/llm_agents.py#L496).
 
-Visit the scorecard URL that's printed at the end of the run, use the 'play' icon under the 'replays' column and see a video of each frame of the action. What did it get wrong?
+Visit the scorecard URL that's printed at the end of the run, use the 'play' icon under the 'replays' column and see a video of each frame of the action. What did it get wrong? 
 
 > [!NOTE]
 > Whilst the prompt may not _fit_ `ls20` I reckon it is easy to fix it up - maybe this is a *first good challenge*?
