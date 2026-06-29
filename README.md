@@ -167,6 +167,10 @@ In my console log I see `openai.RateLimitError: Error code: 429 - {'error': {'me
 
 Visiting https://platform.openai.com/settings/organization/limits shows that I'm on Tier 1 (with $25 on account) and if I go to $50 on account then I get upgraded to Tier 2. I put myself over $50 and indeed I go up to Tier 2 and my `o3` limit jumps up a lot. It suggests I commit $100 to go up another Tier. Oh, this could get expensive!
 
+### Optional - AgentOps
+
+Looking in `ARC-AGI-3-Agents` I see `llm.txt` which explains how to install agentops for "realtime monitoring and debugging".
+
 ### 8. Where next?
 
 * does the prompt in `guidedllm` solve `ls20` or another environment? Try this as a *first good challenge*
