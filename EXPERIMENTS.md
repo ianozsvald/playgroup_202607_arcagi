@@ -7,7 +7,7 @@ You can see the tasks here: https://arcprize.org/tasks
 *Uncertainties for Ian and playgroup to resolve*
 
 * The random bot has a 'reason log' but the online scorecard shows 'no reasoning log captured' - what am I missing?
-  * Does it have something to do with -> https://docs.arcprize.org/partner_templates/agentops#agentops-template ? 
+  * I think it has something to do with `action.reasoning` being recorded in some implementations.
 * When an agent talks about the _colours_ in a grid (e.g. colour 4, 3 etc) - open a snapshot URL and you can mouse-over each cell to learn what number represents the colour
 
 ## random bot (no llm)
@@ -162,3 +162,126 @@ Maybe this is a *second good investigation* to figure out which environment fits
 Code: https://github.com/arcprize/ARC-AGI-3-Agents/blob/main/agents/templates/smolagents.py
 
 I don't know anything about these.
+
+# Thought for an experiment 
+
+Inside `ARC-AGI-3/agents/templates/llm_agents.py` previously I'd added the following block of code.  It is a variant of the existing `GuidedLLM` with a corrected prompt that fits `game=ls20`. I tried this with `gpt-5.2` and it took up to an hour and cost the better part of $10 and then execution stopped (on repeated tries). 
+
+You could try either inserting this variant Agent, or modifying the existing `GuidedLLM` with the better prompt. You could try other LLMs (e.g. gpt 5.4 mini, or gpt 5.4 or gpt 5.5 via https://developers.openai.com/api/docs/models/all). You could try varying the prompt. Can you get it to work?
+
+
+class GuidedLLMls20(LLM, Agent):
+    """Similar to LLM, with explicit human-provided rules in the user prompt to increase success rate."""
+
+    MAX_ACTIONS = 150
+    DO_OBSERVATION = True
+    #MODEL = "o3"
+    #MODEL = "gpt-5.4" # Function tools with reasoning_effort are not supported for gpt-5.4 in /v1/chat/completions. Please use /v1/responses instead.', 'type': 'invalid_request_error
+    MODEL = "gpt-5.2"
+    print(f"*******************Using model: {MODEL}")
+    MODEL_REQUIRES_TOOLS = True
+    MESSAGE_LIMIT = 10
+    REASONING_EFFORT = "high"
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._last_reasoning_tokens = 0
+        self._last_response_content = ""
+        self._total_reasoning_tokens = 0
+
+    def choose_action(
+        self, frames: list[FrameData], latest_frame: FrameData
+    ) -> GameAction:
+        """Override choose_action to capture and store reasoning metadata."""
+
+        action = super().choose_action(frames, latest_frame)
+
+        # Store reasoning metadata in the action.reasoning field
+        action.reasoning = {
+            "model": self.MODEL,
+            "action_chosen": action.name,
+            "reasoning_effort": self.REASONING_EFFORT,
+            "reasoning_tokens": self._last_reasoning_tokens,
+            "total_reasoning_tokens": self._total_reasoning_tokens,
+            "game_context": {
+                "score": latest_frame.levels_completed,
+                "state": latest_frame.state.name,
+                "action_counter": self.action_counter,
+                "frame_count": len(frames),
+            },
+            "agent_type": "guided_llm",
+            "game_rules": "locksmith",
+            "response_preview": self._last_response_content[:200] + "..."
+            if len(self._last_response_content) > 200
+            else self._last_response_content,
+        }
+
+        return action
+
+    def track_tokens(self, tokens: int, message: str = "") -> None:
+        """Override to capture reasoning token information from o3 models."""
+        super().track_tokens(tokens, message)
+
+        # Store the response content for reasoning context (avoid empty or JSON strings)
+        if message and not message.startswith("{"):
+            self._last_response_content = message
+        self._last_reasoning_tokens = tokens
+        self._total_reasoning_tokens += tokens
+
+    def capture_reasoning_from_response(self, response: Any) -> None:
+        """Helper method to capture reasoning tokens from OpenAI API response.
+
+        This should be called from the parent class if we have access to the raw response.
+        For o3 models, reasoning tokens are in response.usage.completion_tokens_details.reasoning_tokens
+        """
+        if hasattr(response, "usage") and hasattr(
+            response.usage, "completion_tokens_details"
+        ):
+            if hasattr(response.usage.completion_tokens_details, "reasoning_tokens"):
+                self._last_reasoning_tokens = (
+                    response.usage.completion_tokens_details.reasoning_tokens
+                )
+                self._total_reasoning_tokens += self._last_reasoning_tokens
+                logger.debug(
+                    f"Captured {self._last_reasoning_tokens} reasoning tokens from o3 response"
+                )
+
+    def build_user_prompt(self, latest_frame: FrameData) -> str:
+        return textwrap.dedent(
+            """
+# CONTEXT:
+You are an agent playing a dynamic game. Your objective is to
+WIN and avoid GAME_OVER while minimizing actions.
+
+One action produces one Frame. One Frame is made of one or more sequential
+Grids. Each Grid is a matrix size INT<0,63> by INT<0,63> filled with
+INT<0,15> values.
+
+You are playing a game called LockSmith. Rules and strategy:
+* RESET: start over, ACTION1: move up, ACTION2: move down, ACTION3: move left, ACTION4: move right (ACTION5 and ACTION6 do nothing in this game)
+* you may may one action per turn
+* your goal is find and collect a matching key then touch the exit door
+* 6 levels total, score shows which level, complete all levels to win (grid row 62)
+* start each level with limited energy. you GAME_OVER if you run out (grid row 61)
+* your player is a 5x5 square: [[12,12,12,12,12], [12,12,12,12,12], [9,9,9,9,9], [9,9,9,9,9], [9,9,9,9,9]]
+* the grid represents a birds-eye view of the level
+* walls are made of INT<4>, you cannot move through a wall
+* walkable floor area is INT<3>
+* current key is shown in bottom-left of entire grid
+* the exit door is a 9x9 square with INT<5> interior
+* to find a new key shape, touch the key rotator, a 4x4 plus sign denoted by INT<0> and INT<1> 
+* if the key shape in the bottom left corner matches the exit door, avoid the key rotator and move towards the exit door
+* if the shape doesn't match, rotate more than once, move 1 space away from the rotator and back on
+* continue rotating the shape and color of the key until the key matches the one inside the exit door (scaled down 2X)
+* if the grid does not change after an action, you probably tried to move into a wall
+
+An example of a good strategy observation:
+The player 5x5 made of INT<12> and INT<9> is standing by a wall of INT<4>, so I cannot move up anymore and should
+move towards the rotator with a good choice of action.
+
+# TURN:
+Call exactly one action.
+        """.format()
+        )
+
+
