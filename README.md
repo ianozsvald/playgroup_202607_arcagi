@@ -146,6 +146,15 @@ uv run main.py --agent=llm --game=ls20
 
 Source: [`llm_agents.py` line 16](./ARC-AGI-3-Agents/agents/templates/llm_agents.py#L16). This took about 2 minutes and $0.09 with `gpt-4o-mini` on my run. Check your [OpenAI balance](https://platform.openai.com/home). Note if you look at the Replay on the scorecard you'll see the moves, but there's no reasoning log - I don't know why!
 
+To see _which_ agents are available try:
+
+```
+uv run main.py --help
+```
+
+which lists all recordings (which gets verbose), but starts with `-a {llm,reasoningllm,fastllm,guidedllm,langgraphfunc,langgraphtextonly,langgraphrandom,langgraphthinking,multimodalllm,openclaw,random,smolcodingagent,smolvisionagent`.
+
+
 ### 7. Test Guided LLM Agent
 
 Then try the guided LLM agent which has a prompt that's a human-solution to one style of challenge. It doesn't solve `ls20` in my testing, what are we missing? Maybe it is meant for a different challenge?
