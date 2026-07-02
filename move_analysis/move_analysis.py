@@ -65,8 +65,8 @@ if __name__ == "__main__":
     #model_name = "qwen/qwen2.5-vl-72b-instruct"
     #model_name = "qwen/qwen3.5-plus-20260420" # very sloww...-> None 
     #model_name = "qwen/qwen3.6-flash" # responds None!
-    #model_name = "openai/gpt-5.5"
-    model_name = "deepseek/deepseek-v4-pro"
+    model_name = "openai/gpt-5.5"
+    #model_name = "deepseek/deepseek-v4-pro" # slow...-> None
 
     print(f"Calling {model_name=}...")
     result = call_llm(prompt, model_name)
