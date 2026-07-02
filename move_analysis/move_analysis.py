@@ -55,7 +55,7 @@ def make_prompt_from_frames(filename, frame_number):
 if __name__ == "__main__":
     filename = "/home/ian/workspace/personal/playgroup/playgroup_202607_arcagi/ARC-AGI-3-Agents/recordings/"
     filename += "ls20-9607627b.ianagent.80.186746b5-307a-4c35-b741-fb4ac29cb429.recording.jsonl"
-    frame_nbr = 48
+    frame_nbr = 53
     prompt, nbr_different_cells = make_prompt_from_frames(filename, frame_nbr)
     print(prompt)
 
@@ -63,12 +63,12 @@ if __name__ == "__main__":
     #model_name = "google/gemini-3.1-flash-lite"
     #model_name = "anthropic/claude-sonnet-4.5" # reasonably quick, somewhat wrong
     #model_name = "qwen/qwen2.5-vl-72b-instruct"
-    #model_name = "qwen/qwen3.5-plus-20260420" # very sloww...-> None 
-    #model_name = "qwen/qwen3.6-flash" # responds None!
+    #model_name = "qwen/qwen3.5-plus-20260420" # very sloww...->
+    #model_name = "qwen/qwen3.6-flash" # responds 
     model_name = "openai/gpt-5.5"
-    #model_name = "deepseek/deepseek-v4-pro" # slow...-> None
+    #model_name = "deepseek/deepseek-v4-pro" # slow...-> 
 
-    print(f"Calling {model_name=}...")
+    print(f"Calling {model_name=} from {frame_nbr=} with {nbr_different_cells=}...")
     result = call_llm(prompt, model_name)
     pprint(result)
 

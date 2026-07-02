@@ -72,9 +72,9 @@ def call_llm(prompt, model_name):
             logger.warning("Oops, got a JSONDecodeError after calling LLM")
 
     logger.info("Raw return from llm call:\n%s", response.output_text)
-    extracted = utils.extract_from_triple_backticks(response.output_text)
-    logger.info("Extracted answer:\n%s", extracted)
-    return extracted
+    #extracted = utils.extract_from_triple_backticks(response.output_text)
+    #logger.info("Extracted answer:\n%s", extracted)
+    return response.output_text
 
 
 def send_image_to_llm(model_name, prompt, image_path):
